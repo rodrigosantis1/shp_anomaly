@@ -136,5 +136,3 @@ for start, end in samples:
     lgd = plt.legend(handles=legend_elements, loc='lower center', framealpha=1)#, bbox_to_anchor=(1,1), loc="upper left")
 
     plt.show()
-    
-#    plt.savefig(start.split(' ')[0]+'.jpg', dpi=300,format='jpg', bbox_inches='tight')#, bbox_extra_artists=(lgd,), bbox_inches='tight')
