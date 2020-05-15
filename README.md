@@ -11,9 +11,8 @@ The following softwares/packages are required for running the scripts:
 - Matplotlib 3.1.3
 
 ## Files
-data
-    /faults.csv - all registered faults during the comprised period;
-    /test.csv - contains unhealthy/abnormal operation state. Includes 12h operation data prior failure;
-    /train.csv - contains healthy operation state.
-isolation_forest.py - contains script for simulating isolation forest model, PCA and KICA-PCA methods.
-results.csv - results file generated from isolation_forest.py execution.
+1. data/faults.csv - all registered faults during the comprised period;
+2. data/test.csv - contains unhealthy/abnormal operation state. Includes 12h operation data prior failure;
+3. data/train.csv - contains healthy operation state;
+4. isolation_forest.py - contains script for simulating isolation forest model, PCA and KICA-PCA methods;
+5. results.csv - results file generated from isolation_forest.py execution.
