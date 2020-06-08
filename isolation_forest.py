@@ -47,7 +47,7 @@ N_RUN=3
 
 models = [('PCA', make_pipeline(PCA())),
           ('KICA-PCA', make_pipeline(RBFSampler(n_components=100), FastICA(whiten=True), PCA(n_components=20))),
-          ('Forest', IsolationForest(contamination=0.06,n_jobs=-1, max_samples=0.05, n_estimators=1000)) #random_state=15,
+          ('iForest', IsolationForest(contamination=0.06,n_jobs=-1, max_samples=0.05, n_estimators=1000)) #random_state=15,
         ]
 
 # Read data
@@ -71,13 +71,15 @@ for name, model in models:
     for run in range(N_RUN):
         np.random.seed(run)
         
-        model.fit(train)
-        if (name != 'Forest'):
+        #model.fit(train)
+        if (name != 'iForest'):
+            model.fit(train)
             X_t  = model.transform(test)
             z = hotelling_t2(X_t, model['pca'].explained_variance_)
             th = threshold_t2(n=len(test), alpha=X_t.shape[1], CI=0.95)
             an = z > th
         else:
+            model.fit(df)
             z = model.score_samples(test)
             th = model.offset_
             an = (model.predict(test) == -1)
@@ -106,7 +108,7 @@ for name, model in models:
     
 df_results = pd.DataFrame(results)
 df_results_group = df_results.groupby('model').agg(['mean','std'])
-df_results_group.to_csv('results.csv')
+#df_results_group.to_csv('results.csv')
 
 
 # Plot examples
@@ -120,21 +122,23 @@ legend_elements = [Line2D([0], [0], color='blue', lw=1, ls='--', label='Threshol
                    Line2D([0], [0], ls='None', marker='.', color='b', label='Detection'),
                    Line2D([0], [0], ls='None', marker='x',color='r', label='Fault')]
 
-
-for start, end in samples:
-    f, ax = plt.subplots(figsize=(12,2))
-    x = score.loc[start:end].resample('5T').mean()
-    y = score.loc[score.anomaly == True].resample('5T').mean()
-    ax = x['score'].plot(ax=ax, c='0.4',lw=1)
-    ax.set_xlim(start, end)
-    plt.axhline(y=th, c='blue',lw=1,ls='--')
-    f = ft.loc[start:end]
-    ax.scatter(y.index.values, th*y.anomaly.values, marker='.', c='blue')
-    ax.scatter(f.index.values, np.repeat(th, len(f)), marker='x', c='red')
-    plt.xlabel('Time')
-    plt.ylabel('Score')
-    lgd = plt.legend(handles=legend_elements, loc='lower center', framealpha=1)#, bbox_to_anchor=(1,1), loc="upper left")
-
-    plt.show()
+f, axs = plt.subplots(3,figsize=(10,6))
     
-#    plt.savefig(start.split(' ')[0]+'.jpg', dpi=300,format='jpg', bbox_inches='tight')#, bbox_extra_artists=(lgd,), bbox_inches='tight')
+for i, sample in enumerate(samples):
+    start, end = sample[0], sample[1]
+    x = score.loc[start:end].resample('5T').mean().abs()
+    y = score.loc[score.anomaly == True].resample('5T').mean()
+    th = x.threshold.values[0]
+    x['score'].plot(ax=axs[i], c='0.4',lw=1)
+    axs[i].set_xlim(start, end)
+    axs[i].axhline(y=th, c='blue',lw=1,ls='--')
+    f = ft.loc[start:end]
+    axs[i].scatter(y.index.values, th*y.anomaly.values, marker='.', c='blue')
+    axs[i].scatter(f.index.values, np.repeat(th, len(f)), marker='x', c='red')
+    axs[i].set_xlabel('')
+    axs[i].set_ylabel('Score')
+    lgd = plt.legend(handles=legend_elements, loc='lower left', framealpha=1)#, bbox_to_anchor=(1,1), loc="upper left")
+
+    plt.tight_layout()
+    
+plt.savefig('anomalies.jpg', dpi=450,format='jpg', bbox_inches='tight')#, bbox_extra_artists=(lgd,), bbox_inches='tight')
