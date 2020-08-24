@@ -61,9 +61,9 @@ models = [#('PCA', make_pipeline(PCA())),
         ]
 
 # Read data
-train = pd.read_csv('data/train.csv', parse_dates=['t'], index_col=0)
-test = pd.read_csv('data/test.csv', parse_dates=['t'], index_col=0)
-ft = pd.read_csv('data/faults.csv', parse_dates=['t'],index_col=0)
+train = pd.read_csv('../data/train.csv', parse_dates=['t'], index_col=0)
+test = pd.read_csv('../data/test.csv', parse_dates=['t'], index_col=0)
+ft = pd.read_csv('../data/faults.csv', parse_dates=['t'],index_col=0)
 df = pd.concat([train,test])
 
 # Dataset 3D visualization
@@ -75,7 +75,7 @@ ax.set_xlabel('Apparent Power'), ax.set_ylabel('LHU Inflow'), ax.set_zlabel('Ave
 ax.set_xlim(1000,6095)
 ax.set_ylim(13.2,23.3)
 ax.set_zlim(0.1,0.8)
-plt.savefig('img/dataset.jpg', dpi=600, format='jpg', bbox_inches='tight')
+plt.savefig('../img/dataset.jpg', dpi=600, format='jpg', bbox_inches='tight')
 
 #2**7, 2**8, 2**9, 2**10, 2**11, 2**12, 2**13
 
@@ -125,18 +125,7 @@ for name, model in models:
 
 df_results = pd.DataFrame(results)
 df_results_group = df_results.groupby('model').agg(['mean','std'])
-df_results_group.to_csv('results.csv')
-
-    
-om = pd.read_csv('data/online_monitoring1.csv', parse_dates=['t'],index_col=0)
-# Print results of Online Monitoring    
-C_online = (om.index - df.index.min()).astype('timedelta64[m]').astype(np.int64).sort_values()
-
-ttc, ctt = temporal_distance2(C_true, C_online, div=60) # maximum delay of 12 hours
-ctt = ctt[ctt < 12]
-l = abs(len(C_true) - len(ctt))
-print("OM")
-print("{:.2f} {:.2f} {:.2f} {}".format(ttc.sum()+ctt.sum(), ttc.sum(), ctt.sum(), l))
+df_results_group.to_csv('../out/results.csv')
 
 
 # Plot examples
@@ -168,7 +157,7 @@ for i, sample in enumerate(samples):
     axs[i].spines['top'].set_visible(False)
     lgd = plt.legend(handles=legend_elements, loc='lower left', framealpha=1)
     plt.tight_layout()
-plt.savefig('img/anomalies.pdf', format='pdf', bbox_inches='tight')
+plt.savefig('../img/anomalies.pdf', format='pdf', bbox_inches='tight')
 
 
 
@@ -187,7 +176,7 @@ ax.set_ylabel('Score')
 ax.set_xlabel('Observation')
 plt.legend(handles=[Line2D([0], [0], color='blue', lw=1, ls='--', label='Threshold'),
                     Line2D([0], [0], color='green', lw=2, ls='-', label='Moving Average (m=48)')])
-plt.savefig('img/score.pdf', format='pdf', bbox_inches='tight')
+plt.savefig('../img/score.pdf', format='pdf', bbox_inches='tight')
 
 
 f, ax = plt.subplots(figsize=(6,5))
@@ -224,7 +213,7 @@ ax.set_xlabel('Apparent Power'), ax.set_ylabel('LHU Inflow'), ax.set_zlabel('Ave
 ax.set_xlim(1000,6095)
 ax.set_ylim(13.2,23.3)
 ax.set_zlim(0.1,0.8)
-plt.savefig('img/dataset2.jpg', dpi=600, format='jpg', bbox_inches='tight')
+plt.savefig('../img/dataset2.jpg', dpi=600, format='jpg', bbox_inches='tight')
 
 
 
