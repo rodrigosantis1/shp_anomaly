@@ -31,6 +31,17 @@ def threshold_t2(n, alpha, CI=0.95):
     F = stats.f.ppf(CI, alpha, (n-alpha))
     return (n**2 - 1)*alpha / (n*(n-alpha)) * F
 
+def temporal_distance2(C_true, C_detect, max_p=None, div=1):
+    ttc = np.full(len(C_true), 0)
+    ctt = np.full(len(C_detect), 0)
+    for i, anomaly in enumerate(C_true):
+        delta = (C_detect - anomaly)
+        ttc[i]  = min(abs(delta))
+    for i, detection in enumerate(C_detect):
+        delta = (C_true - detection)
+        ctt[i] = min(abs(delta))
+    return ttc.sum()/div, ctt.sum()/div
+
 def temporal_distance(C_true, C_detect, max_p=None, div=1):
     ttc = np.full(len(C_true), 0)
     ctt = np.full(len(C_detect), 0)
@@ -43,11 +54,10 @@ def temporal_distance(C_true, C_detect, max_p=None, div=1):
     return ttc.sum()/div, ctt.sum()/div
 
 # Constants
-N_RUN=1
 
-models = [('PCA', make_pipeline(PCA())),
-          ('KICA-PCA', make_pipeline(RBFSampler(n_components=100), FastICA(whiten=True), PCA(n_components=20))),
-          ('iForest', IsolationForest(contamination=0.06,n_jobs=-1, max_samples=0.05, n_estimators=1000)) #random_state=15,
+models = [#('PCA', make_pipeline(PCA())),
+          #('KICA-PCA', make_pipeline(RBFSampler(n_components=100), FastICA(whiten=True), PCA(n_components=20))),
+          ('iForest', IsolationForest(contamination=0.06,n_jobs=-1, max_samples=2048, n_estimators=500)) #random_state=15,
         ]
 
 # Read data
@@ -55,7 +65,6 @@ train = pd.read_csv('data/train.csv', parse_dates=['t'], index_col=0)
 test = pd.read_csv('data/test.csv', parse_dates=['t'], index_col=0)
 ft = pd.read_csv('data/faults.csv', parse_dates=['t'],index_col=0)
 df = pd.concat([train,test])
-om = pd.read_csv('data/online_monitoring.csv', parse_dates=['t'],index_col=0)
 
 # Dataset 3D visualization
 fig = plt.figure(figsize=(8,7))
@@ -65,10 +74,13 @@ ax.plot_trisurf(df['V6'],df['V5'],df[['V1','V2','V3','V4']].mean(axis=1),
 ax.set_xlabel('Apparent Power'), ax.set_ylabel('LHU Inflow'), ax.set_zlabel('Average Vibration')
 ax.set_xlim(1000,6095)
 ax.set_ylim(13.2,23.3)
+ax.set_zlim(0.1,0.8)
 plt.savefig('img/dataset.jpg', dpi=600, format='jpg', bbox_inches='tight')
 
+#2**7, 2**8, 2**9, 2**10, 2**11, 2**12, 2**13
 
 # Simmulation
+N_RUN=150
 results = []
 for name, model in models:
     print(name)
@@ -83,7 +95,7 @@ for name, model in models:
             th = threshold_t2(n=len(test), alpha=X_t.shape[1], CI=0.95)
             an = z > th
         else:
-            model.fit(df)
+            model.fit(train)
             z = model.score_samples(test)
             th = model.offset_
             an = (model.predict(test) == -1)
@@ -111,17 +123,20 @@ for name, model in models:
         })
 
 
+df_results = pd.DataFrame(results)
+df_results_group = df_results.groupby('model').agg(['mean','std'])
+df_results_group.to_csv('results.csv')
+
+    
+om = pd.read_csv('data/online_monitoring1.csv', parse_dates=['t'],index_col=0)
 # Print results of Online Monitoring    
 C_online = (om.index - df.index.min()).astype('timedelta64[m]').astype(np.int64).sort_values()
 
-ttc, ctt = temporal_distance(C_true, C_online, div=60) # maximum delay of 12 hours
-l = abs(len(C_true) - len(C_online))
-print("{:.2f} {:.2f} {:.2f} {}".format(ttc+ctt, ttc, ctt, l))
-
-    
-df_results = pd.DataFrame(results)
-df_results_group = df_results.groupby('model').agg(['mean','std'])
-#df_results_group.to_csv('results.csv')
+ttc, ctt = temporal_distance2(C_true, C_online, div=60) # maximum delay of 12 hours
+ctt = ctt[ctt < 12]
+l = abs(len(C_true) - len(ctt))
+print("OM")
+print("{:.2f} {:.2f} {:.2f} {}".format(ttc.sum()+ctt.sum(), ttc.sum(), ctt.sum(), l))
 
 
 # Plot examples
@@ -191,6 +206,7 @@ ax.axhline(y=th, c='blue',ls='--',lw=1)
 
 cmaps = ['Blues','Greens','Oranges','Reds']
 cs = ['blue','green','orange','red']
+markers = ['o','*','>']
 
 fig = plt.figure(figsize=(8,7))
 ax = fig.add_subplot(111, projection='3d')
@@ -201,9 +217,16 @@ for i, sample in enumerate(samples):
     colors = plt.cm.jet(np.linspace(0,1,len(df2)))
     ax.plot(df2['V6'],df2['V5'],df2[['V1','V2','V3','V4']].mean(axis=1), c=cs[i], alpha=0.5)
     ax.scatter(df2['V6'],df2['V5'],df2[['V1','V2','V3','V4']].mean(axis=1),
-                    c=np.arange(len(df2)),
+                    c=np.arange(len(df2)), marker=markers[i],
                     cmap=cmaps[i], alpha=0.5)    
-    plt.figure()
+    #plt.figure()
 ax.set_xlabel('Apparent Power'), ax.set_ylabel('LHU Inflow'), ax.set_zlabel('Average Vibration')
-#ax.set_xlim(1000,6095)
-#ax.set_ylim(13.2,23.3)
+ax.set_xlim(1000,6095)
+ax.set_ylim(13.2,23.3)
+ax.set_zlim(0.1,0.8)
+plt.savefig('img/dataset2.jpg', dpi=600, format='jpg', bbox_inches='tight')
+
+
+
+
+
