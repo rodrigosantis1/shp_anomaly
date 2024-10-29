@@ -1,8 +1,22 @@
-# Anomaly detection in SHPs
-Intelligent fault diagnosis based on Isolation Forest algorithm for Small Hydroelectric Plants (SHPs).
+# Anomaly Detection in Small Hydroelectric Plants (SHPs)
+
+This repository contains the code for intelligent fault diagnosis based on the Extended Isolation Forest algorithm, specifically tailored for anomaly detection in Small Hydroelectric Plants (SHPs). This work is based on the methodology presented in the article:
+
+> **de Santis, R. B., & Costa, M. A. (2020).**  
+> *Extended isolation forests for fault detection in small hydroelectric plants.*  
+> Sustainability, 12(16), 6421.
+
+## Description
+
+The Extended Isolation Forest algorithm is an advancement over traditional isolation forests, aimed at enhancing fault detection accuracy in SHPs by leveraging anomaly detection techniques. This repository includes:
+- Preprocessed data files for training and testing,
+- Implementation scripts for the isolation forest model, PCA, and KICA-PCA methods, and
+- A results file that records the fault detection outputs based on the model’s analysis.
 
 ## Requirements
-The following softwares/packages are required for running the scripts:
+
+To run the scripts in this repository, ensure that you have the following software and packages installed:
+
 - Python 3.7.6
 - SciPy 1.4.1
 - Scikit-learn 0.22.1
@@ -10,9 +24,19 @@ The following softwares/packages are required for running the scripts:
 - NumPy 1.18.1
 - Matplotlib 3.1.3
 
-## Files
-1. data/faults.csv - all registered faults during the comprised period;
-2. data/test.csv - contains unhealthy/abnormal operation state. Includes 12h operation data prior failure;
-3. data/train.csv - contains healthy operation state;
-4. isolation_forest.py - contains script for simulating isolation forest model, PCA and KICA-PCA methods;
-5. results.csv - results file generated from isolation_forest.py execution.
+## Citation
+
+If you use this code in your research, please cite the following reference:
+
+```bibtex
+@article{de2020extended,
+  title={Extended isolation forests for fault detection in small hydroelectric plants},
+  author={de Santis, Rodrigo Barbosa and Costa, Marcelo Azevedo},
+  journal={Sustainability},
+  volume={12},
+  number={16},
+  pages={6421},
+  year={2020},
+  publisher={MDPI}
+}
+```
